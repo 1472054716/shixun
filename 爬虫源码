@@ -1,0 +1,57 @@
+import requests
+from lxml import etree
+from bs4 import BeautifulSoup
+import csv
+
+#代理
+headers = {
+    'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0'
+}
+
+#目标网页内容的抓取
+url = 'https://www.jwview.com/lc.html'
+resp = requests.get(url,headers=headers)
+resp.encoding = 'gb2312'
+#解析
+html = etree.HTML(resp.text)
+
+#新闻的四个部分
+class news:
+    def __init__(self, industry, url,title,content):
+        self.industry = industry
+        self.url = url
+        self.title = title
+        self.content = content
+
+urls = []
+titles = []
+contents = []
+newss = []
+
+#根据所选行业进行查找
+resp.encoding = 'gb2312'
+html1 = resp.text
+soup = BeautifulSoup(html1,'lxml')
+# industry = soup.find_all('title')
+industry = "医药"
+#拿到每一个新闻的所有信息
+lis = html.xpath('/html/body/div[6]/div[1]/div[3]/ul/li')
+for li in lis:
+    url = li.xpath('./div[2]/h3/a/@href')
+    title = li.xpath('./div[2]/h3/a/text()')
+    content = li.xpath('./div[2]/p/text()')
+    News=news(industry,url,title,content)
+    newss.append([News.industry,News.url,News.title,News.content])
+    # urls.append(News.url)
+    # titles.append(News.title)
+    # contents.append(News.content)
+print(newss)
+
+
+#创建一个文件用于放置数据
+with open('output.csv', mode='w', newline='') as file:
+    writer = csv.writer(file)
+
+    # 写入数据到CSV文件
+    for News in newss:
+        writer.writerow(News)
